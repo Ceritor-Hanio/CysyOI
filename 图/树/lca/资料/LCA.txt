@@ -1,0 +1,90 @@
+type
+  point=^rec;
+  rec=record
+    data:longint;
+    next:point;
+  end;
+var
+  d:array[1..100000]of longint;
+  p:array[0..100000,0..20]of longint;
+  map:array[1..100000]of point;
+  n,m,i,x,y,ans,last,log:longint;
+  k:point;
+
+procedure dfs(u,fa:longint);
+var
+  k:point;
+begin
+  d[u]:=d[fa]+1;
+  p[u,0]:=fa;
+  log:=trunc(ln(n)/ln(2));
+  for i:=1 to log do
+  p[u,i]:=p[p[u,i-1],i-1];
+  k:=map[u];
+  while k<>nil do
+  begin
+    if k^.data<>fa then dfs(k^.data,u);
+    k:=k^.next;
+  end;
+end;
+
+function lca(a,b:longint):longint;
+var
+  i:longint;
+begin
+  if d[a]>d[b] then
+  begin
+    a:=a xor b;b:=b xor a;a:=a xor b;
+  end;
+  if d[a]<d[b] then
+  begin
+    log:=trunc(ln(d[b]-d[a]+1)/ln(2));
+    for i:=log downto 0 do
+    if (d[b]-(1 shl i))>=d[a] then
+    b:=p[b,i];
+  end;
+  if a<>b then
+  begin
+    log:=trunc(ln(d[b])/ln(2));
+    for i:=log downto 0 do
+    if p[a,i]<>p[b,i] then
+    begin
+      a:=p[a,i];b:=p[b,i];
+    end;
+    a:=p[a,0];
+  end;
+  exit(a);
+end;
+
+procedure init(x,y:longint);
+begin
+  new(k);
+  k^.data:=y;
+  k^.next:=map[x];
+  map[x]:=k;
+end;
+
+begin
+  readln(n);
+  for i:=1 to n-1 do
+  begin
+    readln(x,y);
+    init(x,y);
+    init(y,x);
+  end;
+  k:=map[1];
+  while k<>nil do
+  begin
+    dfs(k^.data,1);
+    k:=k^.next;
+  end;
+  readln(n);
+  last:=1;
+  for i:=1 to n do
+  begin
+    readln(x);
+    ans:=ans+d[x]+d[last]-d[lca(x,last)]*2;
+    last:=x;
+  end;
+  writeln(ans);
+end.

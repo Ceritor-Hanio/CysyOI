@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <iostream>
+#include <algorithm>
+#define LL long long
+#define ls nod<<1
+#define rs (nod<<1)+1
+using namespace std; 
+const int maxn = 2e5 + 10;
+
+double v[maxn];//线段 
+
+struct L {
+    double x;
+    double y1,y2;//线段位置(区间)
+    int state;//插入或删除 
+    bool operator <(const L &ith) const{
+        return x<ith.x;//x升序 
+    }
+}line[maxn];
+
+struct segment_tree {
+    double l,r;//区间 
+    int cover;//是否覆盖，相当于lazy 
+    double len;//如果没有全部覆盖，覆盖长度len 
+}tree[maxn<<3];
+
+void pushup(int nod) {
+    if (tree[nod].cover) {//整个区间覆盖 
+        tree[nod].len = (tree[nod].r - tree[nod].l);
+    }
+    else {
+        tree[nod].len = (tree[ls].len + tree[rs].len);
+    }
+}
+
+void build(int l,int r,int nod=1) {
+    tree[nod].l = v[l];
+    tree[nod].r = v[r];
+    if (r-l <= 1)//叶子 
+        return ;
+    int mid = (l + r) >> 1;
+    build(l,mid,ls);//建左子树 
+    build(mid,r,rs);//建右子树 
+}
+
+void modify(double x,double y,int z,int nod=1) {//区间修改 
+    double l = tree[nod].l,r = tree[nod].r;
+    if (x <= l && y >= r){//覆盖区间 
+        tree[nod].cover += z;
+        pushup(nod);     //上推 
+        return ;
+    }
+    if (x < tree[ls].r)
+        modify(x,y,z,ls);
+    if (y > tree[rs].l)
+        modify(x,y,z,rs);
+    pushup(nod); //上推 
+}
+
+int main() {
+    int n;
+    double a,b,c,d;
+    int t = 1;
+    while(~scanf("%d",&n)) {
+        if (n == 0)
+            break;
+        printf("Test case #%d\n",t++);
+        for (int i = 1; i <= n; i++) {
+            scanf("%lf%lf%lf%lf", &a, &b, &c, &d);
+            v[i] = b;//离散化
+            v[n + i] = d;
+            line[i].x = a;//左线段  
+            line[i].y1 = b;
+            line[i].y2 = d;
+            line[i].state = 1;//插入
+            line[i+n].x = c;//右线段 
+            line[i+n].y1 = b;
+            line[i+n].y2 = d;
+            line[i+n].state = -1;//删除
+        }
+        sort(v + 1, v + 1 + (n << 1));
+        sort(line + 1, line + 1 + (n << 1));
+        build(1, n << 1);//建树 
+        double ans = 0;
+        for (int i = 1; i <= 2 * n; i++) {
+            ans += tree[1].len * (line[i].x - line[i - 1].x);//计算面积 
+            modify(line[i].y1, line[i].y2, line[i].state);//插入线段（区间） 
+        }
+        printf("Total explored area: %.2lf\n\n",ans);
+    }
+    return 0;
+}

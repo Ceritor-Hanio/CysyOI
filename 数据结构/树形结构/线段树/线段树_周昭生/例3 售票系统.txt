@@ -1,0 +1,51 @@
+#include<iostream>
+#include<cstdio>
+using namespace std;
+int ticket[1000001],n,d,o,lazy[1000001],maxx,minn,s,R,c;
+int read()
+{
+	int x=0,f=1;char ch=getchar();
+	while(ch<'0'||ch>'9'){if(ch=='-')f=-1;ch=getchar();}
+	while(ch>='0'&&ch<='9'){x=x*10+ch-'0';ch=getchar();}
+	return x*f;
+}
+
+inline void pushdown(int k,int l,int r){//下传 
+	int mid;
+	mid=(l+r)/2;
+	ticket[k*2]+=lazy[k];
+	lazy[k*2]+=lazy[k];
+	ticket[k*2+1]+=lazy[k];
+	lazy[k*2+1]+=lazy[k];
+	lazy[k]=0;
+}
+inline void add(int k,int l,int r,int ll,int rr,int v){//区间加上一个值v 
+	int mid;
+	if (ll<=l&&r<=rr) {
+	  	ticket[k]+=v;
+	  	lazy[k]+=v;
+		return;
+	}
+	mid=(l+r)/2;
+	if (ll<=mid) add(k*2,l,mid,ll,rr,v);
+	if (rr>mid) add(k*2+1,mid+1,r,ll,rr,v);
+    ticket[k]=max(ticket[k*2],ticket[k*2+1]);
+}
+inline int qmax(int k,int l,int r,int ll,int rr){//查询区间最大值 
+	int mid,maxx(-1);
+	if (ll<=l&&r<=rr) return ticket[k];
+	pushdown(k,l,r);
+	mid=(l+r)/2;
+	if (ll<=mid) maxx=max(maxx,qmax(k*2,l,mid,ll,rr));
+	if (rr>mid) maxx=max(maxx,qmax(k*2+1,mid+1,r,ll,rr));
+    return maxx;
+} 
+int main(){
+	c=read();s=read();R=read();
+	for (int i=1;i<=R;i++) {
+		 o=read();d=read();n=read();
+		 maxx=qmax(1,1,c-1,o,d-1); 
+		 if (s-maxx<n) printf("NO\n");
+		 else {printf("YES\n"); add(1,1,c-1,o,d-1,n); }
+	}
+}

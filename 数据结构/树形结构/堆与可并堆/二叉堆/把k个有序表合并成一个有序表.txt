@@ -1,0 +1,133 @@
+把k个有序表合并成一个有序表
+问题描述：把k个有序表合并成一个有序表.元素共有n个.
+分析： 本题考查的是通过二叉堆实现优先队列，而下面的二叉堆采用顺序表的结构存储
+大致思路：先从每个序列中取出一个元素，接着建立K个节点大小的小根堆，输出小根堆堆顶数值；
+①若堆顶元素所在序列没有结束，则将堆顶元素所在序列的下一个元素替换掉堆顶，接着重新调整堆；
+②若堆顶元素所在序列已经结束，则删除堆顶元素，此时堆大小减1，接着在重新调整剩下的堆；
+依次，可以得到排序后最终序列
+
+#include <stdio.h>
+#include <stdlib.h>
+#define N 25               //总共存在的元素
+
+#define LIST_SIZE_K     5     //定义每个序列的大小,这里假设为5
+
+//定义每个堆节点的元素类型
+typedef struct{
+     int start;  //记录每次遍历的起始位置
+     int rLength;     //记录每个序列的长度
+     int key;     //序列中具体的数值
+     int arrayIndex;     //元素所在的数组下标
+}ElemType;
+
+//定义顺序表，存储堆元素
+typedef struct{
+     int length;     //堆的大小
+     ElemType r[LIST_SIZE_K+1];     //数组存储位置从下标1开始
+}Sqlist;
+
+typedef Sqlist HeapType;
+
+/*调整当前节点，使得满足小根堆*/
+HeapType HeapAdjust(HeapType H,int s,int m)
+{ int j;
+  ElemType rc=H.r[s]; 
+  for(j=2*s;j<=m;j*=2)
+  { if(j<m&&H.r[j].key>H.r[j+1].key) //找到较小的左右孩子节点
+     {
+       ++j;
+     }
+     if(rc.key<H.r[j].key)
+          break;
+     H.r[s]=H.r[j];
+     s=j;
+  }
+  H.r[s]=rc;
+  return H;
+}
+
+/*根据元素T,替换掉堆顶元素*/
+HeapType changeHeap(HeapType H,ElemType T)
+{
+     H.r[1]=T;
+     return H;
+}
+/*根据给出的数组序列, 初始化堆数组*/
+HeapType initHeap(HeapType H, int arr[][LIST_SIZE_K])
+{
+     int i;
+     H.length=LIST_SIZE_K;//初始化堆数组的容量大小
+
+     //分别取每个序列中第一个元素初始化K个节点大小的堆
+     for(i=1;i<=H.length;i++)
+     {
+          H.r[i].key=arr[i-1][0];
+          H.r[i].start=0;               //记录第i个序列所在的所在下标，默认开始为0
+          H.r[i].arrayIndex=i-1;     //记录所在的第i个序列    
+          H.r[i].rLength=5;
+     }
+     return H;
+}
+/*删除堆顶，将最后一个元素移到堆顶,并返回删除后未调整的堆*/
+HeapType deleteHeap(HeapType H)
+{
+     H.r[1]=H.r[H.length];
+     H.length=H.length-1;     //堆节点长度减1
+     return H;
+}
+/*按照数组的形式， 返回数组指针，指向排序后的序列*/
+int *HeapSort(HeapType H, int *sortArr,int arr[][LIST_SIZE_K])
+{
+     int i=0;
+     ElemType T;
+
+     sortArr[i++]=H.r[1].key;     //取第一个元素到数组中存储
+     T.rLength=5;
+     while(i<N)
+     {
+               if(H.r[1].start<H.r[1].rLength-1)  //若第一个序列未结束，则读取它的下一个元素
+               {
+                    T.start=H.r[1].start+1;          //存储堆顶元素所在序列的下一个下标位置
+                    T.key=arr[H.r[1].arrayIndex][T.start];          //存储堆顶元素下一个元素的数组
+                    T.arrayIndex= H.r[1].arrayIndex;               //存储堆顶元素所在第几个序列
+                    H=changeHeap(H,T);               //替换掉堆顶元素
+               }
+               else
+               {                                   //若改序列已经是左后一个，则删除堆顶，堆大小相应减1
+                    H=deleteHeap(H);
+               }
+          H=HeapAdjust(H,1,H.length);     //自顶向下，重新调整堆
+          sortArr[i++]=H.r[1].key;     //取堆顶值存储
+     }
+     return sortArr;
+}
+int main()
+{     int i,j;
+     int sortArrs[N];
+     int *sortedArray=sortArrs;
+     /*下面是测试的K组序列*/
+     int arr[LIST_SIZE_K][LIST_SIZE_K]={{1,2,3,9,11},{6,17,18,19,20},{6,12,13,14,15},{16,17,18,45,50},{21,22,23,24,25}};
+     HeapType H;
+
+     H=initHeap(H,arr);     //初始化堆数组
+    
+     sortedArray=HeapSort(H,sortArrs,arr);
+
+     for(i=0;i<LIST_SIZE_K;i++)
+     {     printf("\n序列%d元素:",i+1);
+          for(j=0;j<LIST_SIZE_K;j++)
+          {
+               printf("%3d",arr[i][j]);
+          }
+     }
+     printf("\nK路序列归并后元素:");
+     for(i=0;i<N;i++)
+     {
+          printf("%4d",sortedArray[i]);
+     }
+     printf("\n");
+     return 0;
+}
+————————————————
+版权声明：本文为CSDN博主「ljt_cherish」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/u012605232/article/details/13760977

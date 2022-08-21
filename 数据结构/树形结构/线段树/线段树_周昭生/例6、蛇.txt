@@ -1,0 +1,186 @@
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#include<cstdio>
+using namespace std; 
+const int maxn=10010;
+const int add=10000; 
+int n; 
+struct Node{//坐标点 
+    int x,y;
+    int ljh,ljs;
+    bool operator <(const Node & c) const{
+    	if(x!=c.x) return x<c.x;
+		return y<c.y; 
+	}
+}a[maxn]; 
+int s[maxn], x[maxn], z[maxn], y[maxn]; 
+bool vis[maxn], flag;
+int ans; 
+struct{//线段树节点 
+    int l,r;
+    int cover;
+}tree[maxn*8]; 
+void init(){
+    scanf("%d",&n);
+    for (int i=1;i<=n;i++){
+        scanf("%d%d",&a[i].x,&a[i].y);
+        a[i].x+=add;
+        a[i].y+=add;
+    }
+} 
+void dfs(int k,int fx,int use,int len){//找有n个点的哈密尔顿环 
+    if (fx!=0){//水平 
+        while (1==1){//向左 
+            int p=z[k];
+            if (p==-1) break;//不通 
+            if (p==1 && use==n){//找到哈密尔顿环 
+                a[k].ljh=p;
+                a[p].ljh=k;
+                ans=len+a[k].x-a[p].x;
+                flag=true;
+                return;
+            }
+            if (vis[p]==1) break;//已访问点p
+            vis[p]=1;
+            a[k].ljh=p;
+            a[p].ljh=k;
+            dfs(p,0,use+1,len+a[k].x-a[p].x);//垂直 
+            vis[p]=0;
+            if (flag) return;
+            break;
+        }
+        while (1==1){//向右 
+            int p=y[k];
+            if (p==-1) break;//不通
+            if (p==1 && use==n){//找到哈密尔顿环
+                a[k].ljh=p;
+                a[p].ljh=k;
+                ans=len+a[p].x-a[k].x;
+                flag=true;
+                return;
+            }
+            if (vis[p]==1) break;//已访问点p
+            vis[p]=1;
+            a[k].ljh=p;
+            a[p].ljh=k;
+            dfs(p,0,use+1,len+a[p].x-a[k].x);
+            vis[p]=0;
+            if (flag) return;
+            break;
+        }
+    }
+    if (fx!=1){//垂直方向 
+        while (1==1){//向上 
+            int p=s[k];
+            if (p==-1) break;//不通
+            if (p==1 && use==n){//找到哈密尔顿环
+                a[k].ljs=p;
+                a[p].ljs=k;
+                ans=len+a[p].y-a[k].y;
+                flag=true;
+                return;
+            }
+            if (vis[p]==1) break;//已访问点p
+            vis[p]=1;
+            a[k].ljs=p;
+            a[p].ljs=k;
+            dfs(p,1,use+1,len+a[p].y-a[k].y);
+            vis[p]=0;
+            if (flag) return;
+            break;
+        }
+        while (1==1){//向下 
+            int p=x[k];
+            if (p==-1) break;//不通
+            if (p==1 && use==n){//找到哈密尔顿环 
+                a[k].ljs=p;
+                a[p].ljs=k;
+                ans=len+a[k].y-a[p].y;
+                flag=true;
+                return;
+            }
+            if (vis[p]==1) break;//已访问点p 
+            vis[p]=1;
+            a[k].ljs=p;
+            a[p].ljs=k;
+            dfs(p,1,use+1,len+a[k].y-a[p].y);
+            vis[p]=0;
+            if (flag) return;
+            break;
+        }
+    }
+}
+void build(int k,int l,int r){
+    tree[k].l=l;
+    tree[k].r=r;
+    tree[k].cover=0;
+    if (l==r) return;
+    int mid=(l+r)>>1;
+    build(k*2,l,mid);
+    build(k*2+1,mid+1,r);
+} 
+void insert(int k,int l,int r,int val){
+    if (r<tree[k].l || tree[k].r<l) return;
+    tree[k].cover+=val;
+    if (l<=tree[k].l && tree[k].r<=r) return;
+    insert(k*2,l,r,val);
+    insert(k*2+1,l,r,val);
+} 
+bool check(int k,int l,int r){
+    if (r<tree[k].l || tree[k].r<l) return true;
+    if (tree[k].cover==0) return true;//cover==0,相交 
+    if (l<=tree[k].l && tree[k].r<=r){
+        if (tree[k].cover==0) return true;
+        else return false;
+    }
+    return ((check(k*2,l,r))&&(check(k*2+1,l,r)));
+} 
+void panduan(){//判断 
+    flag=false;
+    for (int i=1;i<=n;i++){
+        int l=a[i].y,r=a[a[i].ljs].y;//线段端点 
+        if (l>r) swap(l,r);
+        l++; r--;
+        if (l<=r && !check(1,l,r)) return;//相交 
+        if (a[i].x<a[a[i].ljh].x)
+            insert(1,a[i].y,a[i].y,1);//插入线段 
+        else
+            insert(1,a[i].y,a[i].y,-1);//删除线段 
+    }
+    flag=true;
+} 
+void make_xy(){//构图，确定坐标点之间关系 
+    for (int i=1;i<=n;i++){
+        s[i]=x[i]=z[i]=y[i]=-1;
+        if (i+1<=n && a[i+1].x==a[i].x) s[i]=i+1;//垂直方向，上 
+        if (i-1>=1 && a[i-1].x==a[i].x) x[i]=i-1; //垂直方向，下 
+        for (int j=i-1;j>=1;j--)if (a[j].y==a[i].y){//水平方向，左 
+                z[i]=j;
+                break;
+            }
+        for (int j=i+1;j<=n;j++)//水平方向，右
+            if (a[j].y==a[i].y){
+                y[i]=j;
+                break;
+            }
+    }
+}  
+int main(){
+    init();
+    sort(a+1,a+1+n);
+    make_xy();//能否与上、下、左、右的点，构成线段 
+ 
+    ans=-1;
+    flag=false;
+    memset(vis,0,sizeof(vis));
+    vis[1]=1;
+    dfs(1,-1,1,0);//构造遍历n个点的图 
+    if (flag==false) printf("0\n");//无法构图 
+ 
+    build(1,0,20000);//建树 
+    panduan();//判断图是否合格 
+    if (flag==false) printf("0\n");
+    else printf("%d\n",ans);
+    return 0;
+}

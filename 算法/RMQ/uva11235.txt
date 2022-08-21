@@ -1,0 +1,56 @@
+// UVa11235 Frequent Values
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+using namespace std;
+const int maxn=100000 + 5;
+const int maxlog=20;
+// 区间最*大*值
+int d[maxn][maxlog];
+void init(const vector<int>& A) {
+  int n=A.size();
+  for(int i=0; i<n; i++) d[i][0]=A[i];
+  for(int j=1; (1<<j) <= n; j++)
+    for(int i=0; i + (1<<j) - 1<n; i++)
+      d[i][j]=max(d[i][j-1], d[i + (1<<(j-1))][j-1]);
+}
+int query(int L, int R) {
+  int k=0;
+  while((1<<(k+1)) <= R-L+1) k++; // 如果2^(k+1)<=R-L+1，那么k还可以加1
+  return max(d[L][k], d[R-(1<<k)+1][k]);
+}
+int a[maxn], num[maxn], left[maxn], right[maxn];
+int main() {
+  int n, q;
+  while(scanf("%d", &n), n) {// 逗号表达式，从左到右计算表达式的值，整个表达式的值为最后一个的值 
+    scanf("%d", &q);
+    for(int i=0; i<n; i++) scanf("%d", &a[i]);
+    a[n]=a[n-1]+1; // 哨兵
+    int start=-1;
+    vector<int> count;//vector动态数组 
+    for(int i=0; i<=n; i++) {
+      if(i==0 || a[i] > a[i-1]) { // 新段开始
+        if(i > 0) {
+          count.push_back(i - start);//本段长度 
+          for(int j=start; j<i; j++) {//分别记录第j个数在cout.size-1段， 段的开始和结束位置 
+            num[j]=count.size()-1; left[j]=start; right[j]=i-1;
+          }
+        }
+        start=i;//下一段的开始位置 
+      }
+    }
+    init(count);//RMQ 
+    while(q--) {
+      int L, R, ans;
+      scanf("%d%d", &L, &R); L--; R--;
+      if(num[L]==num[R]) ans=R-L+1;//在同一段 
+      else {
+        ans=max(R-left[R]+1, right[L]-L+1);//头尾 
+        if(num[L]+1<num[R]) ans=max(ans, query(num[L]+1, num[R]-1));//中间 
+      }
+      printf("%d\n", ans);
+    }
+  }
+  return 0;
+}
+

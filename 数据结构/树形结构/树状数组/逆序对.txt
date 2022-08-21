@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int maxn=500001;
+int c[maxn];
+struct Node{
+	int v,index;
+	bool operator < (const Node &b) const{	
+		return v<b.v; //从小到大排序 
+	}
+}node[maxn];
+int n;
+void add(int i){
+	while(i<=n){
+		c[i]++;
+		i+=i&(-i);	
+	}
+}
+long long sum(int i){
+	long long res=0;
+	while(i>0){
+		res+=c[i];
+		i-=i&(-i);
+	}
+	return res;
+} 
+int main(){
+	cin>>n;
+	for(int i=1;i<=n;i++){
+		scanf("%d",&node[i].v);//数值 
+		node[i].index=i;//位置 
+	}
+	sort(node+1,node+1+n);
+	long long ans=0;
+	for(int i=1;i<=n;i++){
+		add(node[i].index);  //离散化结果—— 下标等效于数值
+		ans+=node[i].index-sum(node[i].index); //逆序对
+	}
+	cout<<ans;
+	return 0;
+}
+

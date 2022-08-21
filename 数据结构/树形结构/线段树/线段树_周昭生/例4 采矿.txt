@@ -1,0 +1,89 @@
+#include<iostream>
+#include<algorithm>	
+using namespace std;
+const int Limit_n=15010;
+const int Limit_coor=60010;
+struct Node{//采矿点坐标 
+    int x,y;
+    bool operator <(const Node &a) const {//内嵌比较函数，排序较快 
+    	if(x!=a.x) return x<a.x;
+		return y<a.y;
+	}
+};
+Node gm[Limit_coor];
+int n,S,W;
+int ic[Limit_coor];
+int dc[Limit_coor];
+struct{//线段树节点 
+    int l,r;
+    int cover;
+    int maxcover;
+}tree[Limit_coor*8];
+void init(){ //读入数据
+    scanf("%d%d",&S,&W);
+    scanf("%d",&n);
+    for (int i=1;i<=n;i++){
+        scanf("%d%d",&gm[i].x,&gm[i].y);
+        gm[i].x+=30000;
+        gm[i].y+=30000;
+    }
+}
+void build(int k,int l,int r){  //线段树的构造
+    tree[k].l=l; tree[k].r=r;
+    tree[k].cover=tree[k].maxcover=0;
+    if (l==r) return;
+    int mid=(l+r)>>1;
+    build(k*2,l,mid);
+    build(k*2+1,mid+1,r);
+}
+void insert(int k,int l,int r,int val){  //插入数据
+    if (r<tree[k].l || tree[k].r<l) return;
+    if (l<=tree[k].l && tree[k].r<=r){  
+        tree[k].cover+=val;
+        tree[k].maxcover=max(tree[k*2].maxcover,tree[k*2+1].maxcover)+tree[k].cover;
+        return;
+    }
+    insert(k*2,l,r,val);
+    insert(k*2+1,l,r,val);
+    tree[k].maxcover=max(tree[k*2].maxcover,tree[k*2+1].maxcover)+tree[k].cover;
+}
+void incx(int k){  //增加列数据
+    int x=gm[k].x;
+    if (ic[x]) return;
+    ic[x]=1;
+    for (int i=k;i<=n;i++)
+        if (gm[i].x==x) insert(1,gm[i].y,min(gm[i].y+W,60000),1);
+        else break;
+}
+void decx(int k){ //删除列数据
+    int x=gm[k].x;
+    if (dc[x]) return;
+    dc[x]=1;
+    for (int i=k;i<=n;i++)
+        if (gm[i].x==x) insert(1,gm[i].y,min(gm[i].y+W,60000),-1);
+        else break;
+}
+void work(){
+    int l=1,r=1;
+    int best=0;
+    incx(r);
+    while (1==1){
+        while (r+1<=n && gm[r+1].x-gm[l].x<=S){//枚举每个区间     
+            r++;
+            incx(r);
+        }
+        best=max(best,tree[1].maxcover);
+        if (r==n) break;
+        decx(l);
+        while (l+1<=n && gm[l+1].x==gm[l].x) l++;
+        l++;
+    }
+    printf("%d\n",best);
+}
+int main(){
+    init(); //读入数据
+    sort(gm+1,gm+1+n);
+    build(1,0,60000);  //构造线段树
+    work();  //处理
+    return 0;
+}

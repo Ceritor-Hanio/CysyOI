@@ -1,0 +1,31 @@
+var
+ p:array[0..100000]of longint;
+ s,s1:ansistring;
+ ans,i,j,mid,max:longint;
+
+ function min(a,b:longint);
+ begin
+  if a<b then exit(a);
+  exit(b);
+ end;
+
+begin
+ readln(s1);
+ mid:=0; max:=0;
+ s:='*';
+ for i:=1 to length(s1) do
+  s:=s+s1[i]+'*';
+ for i:=1 to length(s) do begin
+   p[i]:=0;
+   if mid>=i then p[i]:=min(mid-i,p[mid*2-i]);
+   while (i-p[i]>=1)and(i+p[i]<=length(s))and(s[i+p[i]]=s[i-[p[i]]) do
+   inc(p[i]);
+   dec(p[i]);
+   if i+p[i]>max then begin
+     mid:=i;
+     max:=i+p[i];
+   end;
+   if max>ans then ans:=max;
+ end;
+ writeln(ans);
+end.

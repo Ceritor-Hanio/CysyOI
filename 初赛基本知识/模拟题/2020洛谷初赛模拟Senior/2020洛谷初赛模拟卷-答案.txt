@@ -1,0 +1,13 @@
+一、单项选
+1-5:     ABCBA
+6-10:   CABCB
+11-15: DBACD 
+
+二、阅读程序
+FTTTBA
+FFTTAA
+FFFTCC
+
+三、完善程序
+CDDAC
+CBDCB
